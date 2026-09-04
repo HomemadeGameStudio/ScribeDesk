@@ -42,12 +42,12 @@ export const METHODS: {
   id: MethodId;
   label: string;
   short: string;
-  group: "smart" | "direct" | "relay" | "mirror";
+  group: "smart" | "relay" | "mirror";
   desc: string;
 }[] = [
-  { id: "auto", label: "Automatic", short: "AUTO", group: "smart", desc: "Tries the relays in parallel and uses the first reply. Falls back to direct loading." },
+  { id: "auto", label: "Automatic", short: "AUTO", group: "smart", desc: "Tries every route in parallel and uses the first reply. Reports an error if none answer." },
   { id: "reader", label: "Reader Mode", short: "READ", group: "smart", desc: "Strips the page to clean, readable text via r.jina.ai. Loads even sites that block embedding." },
-  { id: "gateway", label: "UV Gateway", short: "UV", group: "direct", desc: "Prefix gateway for your own deployment — set the prefix in Settings." },
+  { id: "gateway", label: "UV Gateway", short: "UV", group: "mirror", desc: "Prefix gateway for your own deployment — set the prefix in Settings." },
   { id: "relayA", label: "Relay α · allorigins/raw", short: "RLY·α", group: "relay", desc: "Fetches the raw page via relay and renders it in a sealed frame, so embed blocks don’t apply." },
   { id: "relayB", label: "Relay β · allorigins/json", short: "RLY·β", group: "relay", desc: "Second allorigins endpoint (JSON envelope). Survives endpoint-level blocks." },
   { id: "relayC", label: "Relay γ · corsproxy.io", short: "RLY·γ", group: "relay", desc: "corsproxy.io transport. Independent infrastructure from the α/β relays." },

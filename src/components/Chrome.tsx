@@ -403,10 +403,10 @@ export function Toolbar(p: ToolbarProps) {
               <div className="fixed inset-0 z-40" onClick={() => setMmOpen(false)} />
               <div className="absolute right-0 top-8 w-[330px] panel p-1.5 z-50 anim-pop shadow-[0_20px_55px_rgba(0,0,0,0.55)] max-h-[64vh] overflow-y-auto" style={{ backdropFilter: "blur(var(--blur))" }}>
                 <p className="px-2 pt-1.5 pb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-acc">routing · {METHODS.length} methods</p>
-                {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
+                {(["smart", "relay", "mirror"] as const).map((g) => (
                   <div key={g}>
                     <p className="px-2 pt-2 pb-1 font-mono text-[8.5px] uppercase tracking-[0.16em] text-mut">
-                      {g === "smart" ? "automatic" : g === "direct" ? "direct" : g === "relay" ? "relays" : "snapshots"}
+                      {g === "smart" ? "automatic" : g === "relay" ? "relays" : "snapshots"}
                     </p>
                     {METHODS.filter((m) => m.group === g).map((m) => (
                       <button

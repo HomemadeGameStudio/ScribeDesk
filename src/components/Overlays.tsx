@@ -138,10 +138,10 @@ export function SettingsDrawer({ open, onClose, pushToast }: { open: boolean; on
 
           <SectionHead icon={<IGlobe className="w-4 h-4" />} title="Proxy routing" sub={`${METHODS.length} ways a page can reach the frame`} />
           <div className="flex flex-col gap-2.5">
-            {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
+            {(["smart", "relay", "mirror"] as const).map((g) => (
               <div key={g}>
                 <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-mut mb-1.5">
-                  {g === "smart" ? "automatic" : g === "direct" ? "direct" : g === "relay" ? "relays" : "snapshots"}
+                  {g === "smart" ? "automatic" : g === "relay" ? "relays" : "snapshots"}
                 </p>
                 <div className="flex flex-col gap-1.5">
                   {METHODS.filter((m) => m.group === g).map((m) => (
