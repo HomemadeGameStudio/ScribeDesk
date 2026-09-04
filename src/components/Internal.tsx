@@ -2,13 +2,13 @@ import { useEffect, useRef, useState, Fragment } from "react";
 import { useSettings, netPush } from "../lib/settings";
 import { useGames, loadGames, loadConfig, saveConfig, DEFAULT_CONFIG } from "../lib/games";
 import type { GameDef, GameConfig } from "../lib/games";
-import { METHODS, urlHost } from "../lib/router";
+import { urlHost } from "../lib/router";
 import type { Route } from "../lib/router";
 import type { ReactNode } from "react";
-import { STATIC_BOOKMARKS } from "./Chrome";
+
 import type { RecentEntry } from "./Chrome";
 import {
-  ISearch, IPlay, IExt, IGear, IRefresh, IBook, IHome, IGame, ICheck, IClock, IZap, ICpu, IGlobe, IBack, IHash,
+  ISearch, IPlay, IExt, IGear, IRefresh, IBook, IHome, IGame, ICheck, IClock, IZap, ICpu, IGlobe, IBack, IHash, IChevR, ITrash, IX,
 } from "./Icons";
 
 function Fav({ url, className = "w-4 h-4" }: { url: string; className?: string }) {
@@ -52,7 +52,7 @@ const SCHEDULE = [
 ];
 
 export function HomePage({ onNavigate, recents }: { onNavigate: (u: string) => void; recents: RecentEntry[] }) {
-  const { s, brand } = useSettings();
+  const { brand } = useSettings();
   const games = useGames();
   const [now, setNow] = useState(() => new Date());
   const [armed, setArmed] = useState(false);
@@ -65,81 +65,58 @@ export function HomePage({ onNavigate, recents }: { onNavigate: (u: string) => v
   }, []);
 
   const hour = now.getHours();
-  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Evening session";
-  const engine = METHODS.find((e) => e.id === s.engine);
-
-  const sysRow = (k: string, v: string, dot?: boolean) => (
-    <div className="flex items-center justify-between h-8 px-3 border-b border-line last:border-0">
-      <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-mut">{k}</span>
-      <span className="flex items-center gap-1.5 font-mono text-[11px] text-fg">
-        {dot && <span className="pulse-dot" />}
-        {v}
-      </span>
-    </div>
-  );
+  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div data-findroot className="h-full overflow-y-auto">
-      <div className="max-w-[1080px] mx-auto px-7 py-8 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 anim-fadeup">
+      <div className="max-w-[1060px] mx-auto px-7 py-10 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 anim-fadeup">
         <div className="min-w-0">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-acc">
-            {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · period 4
-          </p>
-          <h1 className="font-disp font-bold text-[30px] tracking-tight mt-2 leading-none">{greet}, Student.</h1>
-          <div className="font-mono text-[54px] leading-none mt-4 tabular-nums text-fg">
-            {now.toLocaleTimeString("en-GB")}
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="font-disp font-bold text-[34px] tracking-tight leading-none">{greet}.</h1>
+            <span className="font-mono text-[11px] text-mut tabular-nums">
+              {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {now.toLocaleTimeString("en-GB")}
+            </span>
           </div>
 
           <form
-            className="flex gap-2 mt-6"
+            className="flex gap-2 mt-7"
             onSubmit={(e) => { e.preventDefault(); if (q.trim()) { onNavigate(q); setQ(""); } }}
           >
-            <div className="flex-1 flex items-center gap-2.5 input !h-10 focus-within:!border-[color-mix(in_srgb,var(--acc)_55%,transparent)]">
+            <div className="flex-1 flex items-center gap-2.5 input !h-11 !rounded-[10px] focus-within:!border-[color-mix(in_srgb,var(--acc)_55%,transparent)]">
               <ISearch className="w-4 h-4 text-mut flex-none" />
               <input
-                className="flex-1 bg-transparent outline-none text-[13px] min-w-0"
-                placeholder={`Route anything through ${brand.brand} — try “scribe://lessons” or “orbital mechanics”`}
+                className="flex-1 bg-transparent outline-none text-[13.5px] min-w-0"
+                placeholder={`Search the web or open a page — “scribe://lessons”, wikipedia.org, anything`}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
-              <kbd>⏎ route</kbd>
+              <kbd>⏎</kbd>
             </div>
-            <button className="btn-acc !h-10" type="submit"><IPlay className="w-3.5 h-3.5" /> Route</button>
           </form>
 
-          <p className="mt-8 mb-2 font-mono text-[9.5px] uppercase tracking-[0.18em] text-mut">Quick access</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {STATIC_BOOKMARKS.slice(0, 4).map((b) => (
-              <button
-                key={b.url}
-                onClick={() => onNavigate(b.url)}
-                className="panel p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--acc)_45%,transparent)] group"
-              >
-                <span className="grid place-items-center w-8 h-8 rounded-[var(--radius)] bg-bg3 text-acc mb-2.5 transition-transform duration-200 group-hover:scale-110">
-                  <Fav url={b.url} />
-                </span>
-                <span className="block text-[12.5px] font-semibold truncate">{b.label}</span>
-                <span className="block font-mono text-[9.5px] text-mut truncate mt-0.5">{b.url}</span>
+          <div className="flex items-center justify-between mt-9 mb-2.5">
+            <p className="text-[11px] font-medium text-mut">Recent</p>
+            {recents.length > 8 && (
+              <button className="text-[11.5px] font-medium text-acc hover:text-acc2 transition-colors duration-150 inline-flex items-center gap-1" onClick={() => onNavigate("scribe://history")}>
+                View all {recents.length} <IChevR className="w-3 h-3" />
               </button>
-            ))}
+            )}
           </div>
-
-          <p className="mt-8 mb-2 font-mono text-[9.5px] uppercase tracking-[0.18em] text-mut">Continue where you left off</p>
           <div className="panel overflow-hidden">
             {recents.length === 0 && (
-              <p className="px-4 py-5 text-[12.5px] text-mut">
-                Nothing routed yet. Open the <button className="text-acc hover:underline" onClick={() => onNavigate("scribe://lessons")}>course catalog</button> or type a URL above.
+              <p className="px-4 py-6 text-[12.5px] text-mut text-center">
+                Nothing here yet — open the <button className="text-acc hover:underline" onClick={() => onNavigate("scribe://lessons")}>course catalog</button> or search above.
               </p>
             )}
-            {recents.slice(0, 6).map((r, i) => (
+            {recents.slice(0, 8).map((r, i) => (
               <button
                 key={i}
                 onClick={() => onNavigate(r.display)}
-                className="w-full flex items-center gap-3 px-3.5 h-11 text-left hover:bg-bg3 transition-colors border-b border-line last:border-0"
+                className="w-full flex items-center gap-3 px-3.5 h-11 text-left hover:bg-bg3 transition-colors duration-150 border-b border-line last:border-0 group"
               >
                 <Fav url={r.display} className="w-4 h-4 flex-none" />
-                <span className="flex-1 truncate text-[12.5px] font-medium">{r.title}</span>
-                <span className="font-mono text-[10px] text-mut truncate max-w-[220px]">{r.display}</span>
+                <span className="flex-1 truncate text-[12.5px] font-medium group-hover:text-acc transition-colors duration-150">{r.title}</span>
+                <span className="font-mono text-[10px] text-mut truncate max-w-[200px]">{urlHost(r.display)}</span>
               </button>
             ))}
           </div>
@@ -147,58 +124,48 @@ export function HomePage({ onNavigate, recents }: { onNavigate: (u: string) => v
 
         <div className="min-w-0">
           <div className="panel overflow-hidden">
-            <div className="flex items-center justify-between px-3.5 h-10 border-b border-line">
-              <span className="font-disp font-semibold text-[13px]">Today’s modules</span>
-              <span className="chip !cursor-default">{SCHEDULE.filter((x) => x.pct > 0).length} active</span>
+            <div className="flex items-center justify-between px-4 h-11 border-b border-line">
+              <span className="font-disp font-semibold text-[13.5px]">Today</span>
+              <span className="text-[10.5px] text-mut font-mono">{SCHEDULE.filter((x) => x.pct > 0).length} in progress</span>
             </div>
             {SCHEDULE.map((m) => (
-              <div key={m.t} className="px-3.5 py-3 border-b border-line last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10.5px] text-acc tabular-nums">{m.t}</span>
+              <div key={m.t} className="px-4 py-3 border-b border-line last:border-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="font-mono text-[10.5px] text-mut tabular-nums w-9 flex-none">{m.t}</span>
                   <span className="flex-1 truncate text-[12.5px] font-medium">{m.title}</span>
-                  <span className={`chip !cursor-default ${m.status === "In progress" ? "on" : ""}`}>{m.status}</span>
+                  <span className={`text-[10px] font-mono flex-none ${m.status === "In progress" ? "text-acc" : "text-mut"}`}>{m.status}</span>
                 </div>
-                <div className="flex items-center gap-2.5 mt-2">
-                  <div className="flex-1 h-[5px] rounded-full bg-bg3 overflow-hidden">
+                <div className="flex items-center gap-2.5 mt-2 pl-[46px]">
+                  <div className="flex-1 h-[3px] rounded-full bg-bg3 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: armed ? m.pct + "%" : "0%", background: m.pct === 100 ? "var(--acc)" : "linear-gradient(90deg,var(--acc),var(--acc2))" }}
+                      style={{ width: armed ? m.pct + "%" : "0%", background: "var(--acc)" }}
                     />
                   </div>
                   <span className="font-mono text-[10px] text-mut w-8 text-right tabular-nums">{m.pct}%</span>
                 </div>
-                <p className="font-mono text-[9.5px] text-mut mt-1.5">{m.room}</p>
               </div>
             ))}
-          </div>
-
-          <div className="panel mt-4 overflow-hidden">
-            <div className="flex items-center gap-2 px-3.5 h-10 border-b border-line">
-              <ICpu className="w-4 h-4 text-acc" />
-              <span className="font-disp font-semibold text-[13px]">Routing core</span>
-            </div>
-            {sysRow("engine", engine?.label ?? s.engine, true)}
-            {sysRow("search", s.search === "ddg" ? "DuckDuckGo Lite" : "Wikipedia")}
-            {sysRow("module index", games.status === "ready" ? games.source : games.status === "loading" ? "syncing…" : "offline — packaged", games.status === "ready")}
-            {sysRow("panic key", "ESC → " + s.panicScreen)}
-            {sysRow("disguise", brand.brand)}
           </div>
 
           <button
             onClick={() => onNavigate("scribe://lessons")}
             className="w-full mt-4 panel p-4 flex items-center gap-3.5 text-left transition-all duration-200 hover:border-[color-mix(in_srgb,var(--acc)_50%,transparent)] group"
           >
-            <span className="grid place-items-center w-10 h-10 rounded-[var(--radius)] bg-acc text-bg0 transition-transform duration-200 group-hover:scale-105 group-hover:-rotate-3">
-              <IGame className="w-5 h-5" />
+            <span className="grid place-items-center w-9 h-9 rounded-[var(--radius)] bg-acc text-bg0 transition-transform duration-200 group-hover:scale-105">
+              <IGame className="w-4.5 h-4.5" />
             </span>
             <span className="flex-1">
               <span className="block font-disp font-semibold text-[14px]">{brand.catalogTitle}</span>
-              <span className="block text-[11.5px] text-mut mt-0.5">
-                {games.list.length} modules indexed · WASM builds stream from genizy/web-port
-              </span>
+              <span className="block text-[11.5px] text-mut mt-0.5">{games.list.length} modules available</span>
             </span>
             <IPlay className="w-4 h-4 text-acc transition-transform duration-200 group-hover:translate-x-1" />
           </button>
+
+          <div className="mt-6 px-1 flex items-center justify-between text-[10.5px] text-mut font-mono">
+            <span>{brand.brand} workspace</span>
+            <button className="hover:text-fg transition-colors duration-150" onClick={() => onNavigate("scribe://history")}>scribe://history</button>
+          </div>
         </div>
       </div>
     </div>
@@ -491,6 +458,104 @@ export function GameStage({ game, onBack, pushToast }: { game: GameDef; onBack: 
         <span className="flex-1" />
         <span className="hidden sm:block font-mono text-[9.5px] text-mut">sandbox: sealed · origin-isolated · zero-leak pool</span>
         <IClock className="w-3.5 h-3.5 text-mut" />
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- history page ------------------------ */
+
+function relTime(t?: number): string {
+  if (!t) return "—";
+  const d = Date.now() - t;
+  if (d < 60_000) return "just now";
+  if (d < 3_600_000) return Math.floor(d / 60_000) + "m ago";
+  if (d < 86_400_000) return Math.floor(d / 3_600_000) + "h ago";
+  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export function HistoryPage({
+  recents, onNavigate, onRemove, onClear,
+}: {
+  recents: RecentEntry[];
+  onNavigate: (u: string) => void;
+  onRemove: (u: string) => void;
+  onClear: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const filtered = q.trim()
+    ? recents.filter((r) => (r.title + " " + r.display).toLowerCase().includes(q.trim().toLowerCase()))
+    : recents;
+
+  return (
+    <div data-findroot className="h-full overflow-y-auto">
+      <div className="max-w-[860px] mx-auto px-7 py-10 anim-fadeup">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="font-disp font-bold text-[30px] tracking-tight leading-none">History</h1>
+            <p className="text-[12px] text-mut mt-2 font-mono">{recents.length} {recents.length === 1 ? "page" : "pages"} · stored on this device only</p>
+          </div>
+          {recents.length > 0 && (
+            confirming ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="text-[11.5px] text-mut">Clear everything?</span>
+                <button className="btn-acc !h-8 !px-3 !bg-acc2 !text-[#17130a]" onClick={() => { onClear(); setConfirming(false); }}>Yes, clear</button>
+                <button className="ghost-btn !h-8" onClick={() => setConfirming(false)}>Keep</button>
+              </span>
+            ) : (
+              <button className="ghost-btn" onClick={() => setConfirming(true)}><ITrash className="w-3.5 h-3.5" /> Clear history</button>
+            )
+          )}
+        </div>
+
+        {recents.length > 0 && (
+          <div className="flex items-center gap-2.5 input !h-9 !rounded-[8px] mt-6 max-w-[420px]">
+            <ISearch className="w-3.5 h-3.5 text-mut flex-none" />
+            <input
+              className="flex-1 bg-transparent outline-none text-[12.5px] min-w-0"
+              placeholder="Filter history…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {q && <button className="text-mut hover:text-fg transition-colors" onClick={() => setQ("")}><IX className="w-3.5 h-3.5" /></button>}
+          </div>
+        )}
+
+        <div className="panel overflow-hidden mt-5">
+          {recents.length === 0 && (
+            <p className="px-5 py-10 text-[12.5px] text-mut text-center">
+              Pages you open will show up here.
+            </p>
+          )}
+          {recents.length > 0 && filtered.length === 0 && (
+            <p className="px-5 py-8 text-[12.5px] text-mut text-center">No matches for “{q}”.</p>
+          )}
+          {filtered.map((r, i) => (
+            <div
+              key={r.display + i}
+              className="group flex items-center gap-3 px-4 h-12 border-b border-line last:border-0 hover:bg-bg3 transition-colors duration-150 cursor-pointer"
+              onClick={() => onNavigate(r.display)}
+              title={r.display}
+            >
+              <Fav url={r.display} className="w-4 h-4 flex-none" />
+              <span className="flex-1 min-w-0">
+                <span className="block text-[12.5px] font-medium truncate group-hover:text-acc transition-colors duration-150">{r.title}</span>
+                <span className="block font-mono text-[9.5px] text-mut truncate">{r.display}</span>
+              </span>
+              <span className="font-mono text-[10px] text-mut flex-none w-16 text-right tabular-nums">{relTime(r.t)}</span>
+              <button
+                className="iconbtn !w-7 !h-7 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-none"
+                onClick={(e) => { e.stopPropagation(); onRemove(r.display); }}
+                title="Remove from history"
+              >
+                <IX className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 text-[10.5px] text-mut font-mono">tip — <kbd>Ctrl</kbd> + <kbd>H</kbd> opens this page from anywhere</p>
       </div>
     </div>
   );

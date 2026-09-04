@@ -11,15 +11,6 @@ import {
 
 export interface Bookmark { label: string; url: string }
 
-export const STATIC_BOOKMARKS: Bookmark[] = [
-  { label: "Workspace Home", url: "scribe://home" },
-  { label: "Course Catalog", url: "scribe://lessons" },
-  { label: "Wikipedia", url: "https://en.wikipedia.org/wiki/Main_Page" },
-  { label: "OSM Atlas", url: "https://www.openstreetmap.org/export/embed.html?bbox=-0.135%2C51.49&layer=mapnik" },
-  { label: "2048 — Tile Merge", url: "https://gabrielecirulli.github.io/2048/" },
-  { label: "Hextris", url: "https://hextris.github.io/hextris/" },
-];
-
 export function loadCustomBookmarks(): Bookmark[] {
   try {
     return JSON.parse(localStorage.getItem("sd:bookmarks") || "[]") as Bookmark[];
@@ -91,7 +82,7 @@ export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, on
         </span>
         <span className="leading-none text-left">
           <span className="block font-disp font-bold text-[14px] tracking-tight">{brand.brand}</span>
-          <span className="block font-mono text-[9px] text-mut tracking-[0.14em] uppercase mt-0.5">{brand.tag} · v2.4</span>
+          <span className="block font-mono text-[9px] text-mut tracking-[0.14em] uppercase mt-0.5">{brand.tag}</span>
         </span>
       </button>
 
@@ -105,9 +96,8 @@ export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, on
           <div className={menuPanel}>
             {[
               { l: "Course Catalog", d: "Full module index · scribe://lessons", u: "scribe://lessons", ic: <IBook className="w-4 h-4 text-acc" /> },
-              { l: "Workspace Home", d: "Schedule, recents & system status", u: "scribe://home", ic: <IHome className="w-4 h-4 text-acc" /> },
-              { l: "Reading List", d: "Wikipedia main portal", u: "https://en.wikipedia.org/wiki/Main_Page", ic: <IGlobe className="w-4 h-4 text-acc" /> },
-              { l: "Field Atlas", d: "OpenStreetMap embed", u: "https://www.openstreetmap.org/export/embed.html?bbox=-0.135%2C51.49&layer=mapnik", ic: <IGlobe className="w-4 h-4 text-acc" /> },
+              { l: "Workspace Home", d: "Schedule & recent activity", u: "scribe://home", ic: <IHome className="w-4 h-4 text-acc" /> },
+              { l: "History", d: "Everything you’ve opened · scribe://history", u: "scribe://history", ic: <IClock className="w-4 h-4 text-acc" /> },
             ].map((x) => (
               <button key={x.l} className={item} onClick={() => { setMenu(null); onNavigate(x.u); }}>
                 {x.ic}
@@ -160,7 +150,6 @@ export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, on
 
       <div className="flex-1" />
 
-      <span className="hidden md:inline-flex chip !cursor-default mr-1"><IWifi className="w-3 h-3" /> RELAY OK</span>
       <span className="hidden lg:inline-flex items-center gap-1.5 mr-1 font-mono text-[11px] text-mut">
         <IClock className="w-3.5 h-3.5" />
         {clock.toLocaleTimeString("en-GB")}
@@ -218,7 +207,7 @@ export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, on
 
 /* ------------------------------- sidebar ----------------------------- */
 
-export interface RecentEntry { display: string; title: string }
+export interface RecentEntry { display: string; title: string; t?: number }
 
 interface SidebarProps {
   onNavigate: (url: string) => void;
@@ -248,25 +237,21 @@ export function Sidebar({ onNavigate, recents, current, pushToast }: SidebarProp
         <button className={row(current === "scribe://lessons")} title={brand.catalogTitle} onClick={() => onNavigate("scribe://lessons")}>
           <IBook className="w-4 h-4 flex-none" />
           {!collapsed && <span>{brand.lessonsLabel}</span>}
-          {!collapsed && <span className="ml-auto pulse-dot" />}
+        </button>
+        <button className={row(current === "scribe://history")} title="History" onClick={() => onNavigate("scribe://history")}>
+          <IClock className="w-4 h-4 flex-none" />
+          {!collapsed && <span>History</span>}
         </button>
       </nav>
 
       {!collapsed && (
         <div className="flex-1 overflow-y-auto px-2 pb-2 min-h-0">
-          <p className="px-2.5 pt-3 pb-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-mut">Recent</p>
-          {recents.length === 0 && <p className="px-2.5 text-[11.5px] text-mut italic">Nothing routed yet this session.</p>}
-          {recents.slice(0, 7).map((r, i) => (
+          <p className="px-2.5 pt-3 pb-1 text-[10.5px] font-medium text-mut">Recent</p>
+          {recents.length === 0 && <p className="px-2.5 text-[11.5px] text-mut italic">Nothing opened yet.</p>}
+          {recents.slice(0, 8).map((r, i) => (
             <button key={i} className={row(false)} title={r.display} onClick={() => onNavigate(r.display)}>
               <RouteGlyph url={r.display} className="w-3.5 h-3.5 flex-none" />
               <span className="truncate">{r.title}</span>
-            </button>
-          ))}
-          <p className="px-2.5 pt-4 pb-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-mut">Pinned</p>
-          {STATIC_BOOKMARKS.slice(2, 5).map((b) => (
-            <button key={b.url} className={row(false)} title={b.url} onClick={() => onNavigate(b.url)}>
-              <RouteGlyph url={b.url} className="w-3.5 h-3.5 flex-none" />
-              <span className="truncate">{b.label}</span>
             </button>
           ))}
         </div>
@@ -407,11 +392,11 @@ export function Toolbar(p: ToolbarProps) {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMmOpen(false)} />
               <div className="absolute right-0 top-8 w-[330px] panel p-1.5 z-50 anim-pop shadow-[0_20px_55px_rgba(0,0,0,0.55)] max-h-[64vh] overflow-y-auto" style={{ backdropFilter: "blur(var(--blur))" }}>
-                <p className="px-2 pt-1.5 pb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-acc">anti-embed bypass · {METHODS.length} transports</p>
+                <p className="px-2 pt-1.5 pb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-acc">routing · {METHODS.length} methods</p>
                 {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
                   <div key={g}>
                     <p className="px-2 pt-2 pb-1 font-mono text-[8.5px] uppercase tracking-[0.16em] text-mut">
-                      {g === "smart" ? "smart bypass" : g === "direct" ? "direct transports" : g === "relay" ? "cors relays · xfo-immune" : "mirror snapshots"}
+                      {g === "smart" ? "automatic" : g === "direct" ? "direct" : g === "relay" ? "relays" : "snapshots"}
                     </p>
                     {METHODS.filter((m) => m.group === g).map((m) => (
                       <button
@@ -448,18 +433,28 @@ export function Toolbar(p: ToolbarProps) {
 
 /* ---------------------------- bookmark bar --------------------------- */
 
-export function BookmarkBar({ bookmarks, onNavigate }: { bookmarks: Bookmark[]; onNavigate: (u: string) => void }) {
+export function BookmarkBar({ bookmarks, onNavigate, onRemove }: { bookmarks: Bookmark[]; onNavigate: (u: string) => void; onRemove: (u: string) => void }) {
   return (
     <div className="flex items-center gap-1 h-9 px-2.5 border-b border-line bg-bg1/70 overflow-x-auto flex-none" style={{ scrollbarWidth: "none" }}>
+      {bookmarks.length === 0 && (
+        <span className="text-[11px] text-mut/80 px-1">Pin pages with the star in the address bar — they’ll live here.</span>
+      )}
       {bookmarks.map((b) => (
-        <button key={b.url} className="chip !h-[26px] !text-[11px] !font-body" onClick={() => onNavigate(b.url)} title={b.url}>
+        <span key={b.url} className="group/pin inline-flex items-center gap-1.5 h-[26px] pl-2.5 pr-1 rounded-[var(--radius)] border border-line bg-bg2 text-[11px] font-medium cursor-pointer transition-all duration-150 hover:border-[color-mix(in_srgb,var(--acc)_45%,transparent)] hover:bg-bg3 flex-none" onClick={() => onNavigate(b.url)} title={b.url}>
           <RouteGlyph url={b.url} className="w-3.5 h-3.5" />
-          {b.label}
-        </button>
+          <span className="max-w-[150px] truncate">{b.label}</span>
+          <span
+            role="button"
+            tabIndex={0}
+            title="Unpin"
+            onClick={(e) => { e.stopPropagation(); onRemove(b.url); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onRemove(b.url); } }}
+            className="grid place-items-center w-4 h-4 rounded-full text-mut opacity-0 group-hover/pin:opacity-100 hover:!bg-bg3 hover:!text-acc2 transition-all duration-150"
+          >
+            <IX className="w-2.5 h-2.5" />
+          </span>
+        </span>
       ))}
-      <span className="ml-auto hidden md:block font-mono text-[9.5px] text-mut tracking-[0.14em] uppercase flex-none">
-        {bookmarks.length} pinned
-      </span>
     </div>
   );
 }
@@ -469,8 +464,8 @@ export function BookmarkBar({ bookmarks, onNavigate }: { bookmarks: Bookmark[]; 
 export function StatusStrip({ route, tabCount }: { route: Route; tabCount: number }) {
   return (
     <div className="flex items-center gap-3 h-[26px] px-3 border-t border-line bg-bg1 text-mut flex-none overflow-hidden">
-      <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] flex-none">
-        <span className="pulse-dot" /> routed · {route.via}
+      <span className="flex items-center gap-1.5 font-mono text-[9.5px] flex-none">
+        <span className="pulse-dot" /> via {route.via}
       </span>
       <span className="flex-1 truncate font-mono text-[10.5px] text-mut/80 text-center">
         {route.note && <span className="text-acc2">{route.note} · </span>}

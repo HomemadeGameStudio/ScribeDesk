@@ -13,7 +13,7 @@ export type MethodId =
   | "translate" | "wb2if" | "wb2id" | "reader";
 
 export type SearchId = "wikipedia" | "ddg";
-export type RouteKind = "home" | "lessons" | "game" | "web" | "reader";
+export type RouteKind = "home" | "lessons" | "history" | "game" | "web" | "reader";
 
 export interface Route {
   kind: RouteKind;
@@ -45,11 +45,11 @@ export const METHODS: {
   group: "smart" | "direct" | "relay" | "mirror";
   desc: string;
 }[] = [
-  { id: "auto", label: "Auto Bypass", short: "AUTO", group: "smart", desc: "Races all relays in parallel; first live payload wins. Falls back to direct embed." },
-  { id: "reader", label: "Reader Mode", short: "READ", group: "smart", desc: "r.jina.ai strips the page to clean text/markdown. Beats even total frame bans." },
-  { id: "direct", label: "Direct Embed", short: "DIRECT", group: "direct", desc: "No rewrite — load the origin as-is. Full JS, but frame-hostile sites will render blank." },
+  { id: "auto", label: "Automatic", short: "AUTO", group: "smart", desc: "Tries the relays in parallel and uses the first reply. Falls back to direct loading." },
+  { id: "reader", label: "Reader Mode", short: "READ", group: "smart", desc: "Strips the page to clean, readable text via r.jina.ai. Loads even sites that block embedding." },
+  { id: "direct", label: "Direct Embed", short: "DIRECT", group: "direct", desc: "Loads the site as-is with full JS. Pages that refuse embedding will appear blank." },
   { id: "gateway", label: "UV Gateway", short: "UV", group: "direct", desc: "Ultraviolet-style prefix gateway. Point it at your own /service/ deployment." },
-  { id: "relayA", label: "Relay α · allorigins/raw", short: "RLY·α", group: "relay", desc: "CORS relay, raw body. Rendered in a sealed srcdoc frame — immune to XFO." },
+  { id: "relayA", label: "Relay α · allorigins/raw", short: "RLY·α", group: "relay", desc: "Fetches the raw page via relay and renders it in a sealed frame, so embed blocks don’t apply." },
   { id: "relayB", label: "Relay β · allorigins/json", short: "RLY·β", group: "relay", desc: "Second allorigins endpoint (JSON envelope). Survives endpoint-level blocks." },
   { id: "relayC", label: "Relay γ · corsproxy.io", short: "RLY·γ", group: "relay", desc: "corsproxy.io transport. Independent infrastructure from the α/β relays." },
   { id: "relayD", label: "Relay δ · codetabs", short: "RLY·δ", group: "relay", desc: "api.codetabs.com proxy hop. Often up when the others are filtered." },
@@ -81,10 +81,13 @@ export function urlHost(u: string): string {
 
 export function internalRoute(kind: RouteKind, gameId?: string): Route {
   const display =
-    kind === "home" ? "scribe://home" : kind === "lessons" ? "scribe://lessons" : `scribe://play/${gameId ?? ""}`;
+    kind === "home" ? "scribe://home"
+    : kind === "lessons" ? "scribe://lessons"
+    : kind === "history" ? "scribe://history"
+    : `scribe://play/${gameId ?? ""}`;
   return {
     kind, raw: display, display,
-    title: kind === "home" ? "Workspace Home" : kind === "lessons" ? "Course Catalog" : "Module Session",
+    title: kind === "home" ? "Workspace Home" : kind === "lessons" ? "Course Catalog" : kind === "history" ? "History" : "Module Session",
     src: null, srcdoc: null, sealed: false, via: "internal", gameId,
   };
 }
@@ -205,6 +208,7 @@ export async function resolveRoute(
       return r;
     }
     if (path === "lessons") return internalRoute("lessons");
+    if (path === "history") return internalRoute("history");
     return internalRoute("home");
   }
 

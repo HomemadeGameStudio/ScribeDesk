@@ -174,21 +174,20 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
 /* ---------- ambient layers ---------- */
 .ambient-grid {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--fg) 3.2%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--fg) 3.2%, transparent) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
+  background:
+    radial-gradient(ellipse 60% 42% at 18% -6%, color-mix(in srgb, var(--acc) 5.5%, transparent), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 88% 4%, color-mix(in srgb, var(--acc2) 3.5%, transparent), transparent 72%);
+  transition: background 0.6s ease;
 }
 .ambient-glow {
   position: fixed; z-index: 0; pointer-events: none;
-  width: 62vw; height: 46vh; left: -8vw; top: -14vh;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--acc) 9%, transparent), transparent 70%);
-  filter: blur(10px);
+  width: 70vw; height: 40vh; left: 15vw; top: -18vh;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--acc) 4.5%, transparent), transparent 72%);
+  filter: blur(14px);
   transition: background 0.6s ease;
 }
 .ambient-noise {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 

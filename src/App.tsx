@@ -6,10 +6,10 @@ import { getGame, loadGames } from "./lib/games";
 import type { GameDef } from "./lib/games";
 import {
   TopBar, Sidebar, TabStrip, Toolbar, BookmarkBar, StatusStrip,
-  STATIC_BOOKMARKS, loadCustomBookmarks, saveCustomBookmarks,
+  loadCustomBookmarks, saveCustomBookmarks,
 } from "./components/Chrome";
 import type { Bookmark, RecentEntry } from "./components/Chrome";
-import { HomePage, LessonsPage, GameStage, ReaderPage } from "./components/Internal";
+import { HomePage, LessonsPage, GameStage, ReaderPage, HistoryPage } from "./components/Internal";
 import { SettingsDrawer, FindOverlay, DevTools, PanicOverlay, Toasts } from "./components/Overlays";
 import { IInfo, IZap } from "./components/Icons";
 import { urlHost } from "./lib/router";
@@ -126,14 +126,31 @@ function Shell() {
 
   const patchTab = (id: string, fn: (t: Tab) => Tab) => setTabs((prev) => prev.map((t) => (t.id === id ? fn(t) : t)));
 
+  const persistRecents = (next: RecentEntry[]) => {
+    try {
+      localStorage.setItem("sd:recent", JSON.stringify(next));
+    } catch { /* quota */ }
+    setRecents(next);
+  };
+
   const pushRecent = (r: RecentEntry) => {
     setRecents((prev) => {
-      const next = [r, ...prev.filter((x) => x.display !== r.display)].slice(0, 10);
+      const next = [{ ...r, t: Date.now() }, ...prev.filter((x) => x.display !== r.display)].slice(0, 60);
       try {
         localStorage.setItem("sd:recent", JSON.stringify(next));
       } catch { /* quota */ }
       return next;
     });
+  };
+
+  const removeRecent = (display: string) => persistRecents(recents.filter((x) => x.display !== display));
+  const clearRecents = () => { persistRecents([]); pushToast("History cleared."); };
+
+  const unpinBookmark = (url: string) => {
+    const next = customMarks.filter((b) => b.url !== url);
+    setCustomMarks(next);
+    saveCustomBookmarks(next);
+    pushToast("Unpinned.");
   };
 
   async function navigateIn(tabId: string, raw: string, methodOverride?: MethodId) {
@@ -222,27 +239,19 @@ function Shell() {
 
   /* ------------------------------ bookmarks -------------------------- */
 
-  const bookmarked =
-    STATIC_BOOKMARKS.some((b) => b.url === route.display) || customMarks.some((b) => b.url === route.display);
+  const bookmarked = customMarks.some((b) => b.url === route.display);
 
   const toggleBookmark = () => {
     const url = route.display;
     if (customMarks.some((b) => b.url === url)) {
-      const next = customMarks.filter((b) => b.url !== url);
-      setCustomMarks(next);
-      saveCustomBookmarks(next);
-      pushToast("Bookmark removed.");
-      return;
-    }
-    if (STATIC_BOOKMARKS.some((b) => b.url === url)) {
-      pushToast("That one ships pinned by the workspace.");
+      unpinBookmark(url);
       return;
     }
     const label = url.startsWith("scribe://") ? url : urlHost(url);
     const next = [...customMarks, { label, url }];
     setCustomMarks(next);
     saveCustomBookmarks(next);
-    pushToast("Pinned to bookmark bar — " + label);
+    pushToast("Pinned — " + label);
   };
 
   /* ---------------------------- find engine -------------------------- */
@@ -300,6 +309,7 @@ function Shell() {
       if (mod && k === "f") { e.preventDefault(); setFindOpen(true); }
       else if (mod && k === "l") { e.preventDefault(); omniRef.current?.focus(); omniRef.current?.select(); }
       else if (mod && k === "t") { e.preventDefault(); openInNewTab("scribe://home"); }
+      else if (mod && k === "h") { e.preventDefault(); openInNewTab("scribe://history"); }
       else if (mod && k === "w") { e.preventDefault(); closeTab(active.id); }
       else if (mod && k === "r") { e.preventDefault(); refresh(); }
       else if (e.ctrlKey && e.key === "Tab") { e.preventDefault(); cycleTab(e.shiftKey ? -1 : 1); }
@@ -315,7 +325,7 @@ function Shell() {
 
   useEffect(() => {
     loadGames();
-    conPush("info", "ScribeDesk runtime online · routing core armed");
+    conPush("info", "ScribeDesk workspace ready");
     netPush({ method: "BOOT", url: "scribe://home", engine: "internal", status: "ROUTED", ms: 4 });
     const orig = { log: console.log, warn: console.warn, error: console.error, info: console.info };
     (["log", "warn", "error", "info"] as const).forEach((lv) => {
@@ -373,7 +383,7 @@ function Shell() {
           <Sidebar
             onNavigate={(u) => void navigateIn(active.id, u)}
             recents={recents}
-            current={route.kind === "home" || route.kind === "lessons" ? route.display : ""}
+            current={route.kind === "home" || route.kind === "lessons" || route.kind === "history" ? route.display : ""}
             pushToast={pushToast}
           />
 
@@ -411,7 +421,7 @@ function Shell() {
             />
             {active.loading && <div className="h-[2px] progress-track flex-none" />}
 
-            <BookmarkBar bookmarks={[...STATIC_BOOKMARKS, ...customMarks]} onNavigate={(u) => void navigateIn(active.id, u)} />
+            <BookmarkBar bookmarks={customMarks} onNavigate={(u) => void navigateIn(active.id, u)} onRemove={unpinBookmark} />
 
             <div className="relative flex-1 min-h-0">
               {tabs.map((t) => {
@@ -421,6 +431,14 @@ function Shell() {
                   <div key={t.id} id={"pane-" + t.id} className={hiddenPane ? "hidden" : "absolute inset-0 flex flex-col min-h-0"}>
                     {r.kind === "home" && <HomePage onNavigate={(u) => void navigateIn(t.id, u)} recents={recents} />}
                     {r.kind === "lessons" && <LessonsPage onLaunch={(g: GameDef) => void navigateIn(t.id, "scribe://play/" + g.id)} />}
+                    {r.kind === "history" && (
+                      <HistoryPage
+                        recents={recents}
+                        onNavigate={(u) => void navigateIn(t.id, u)}
+                        onRemove={removeRecent}
+                        onClear={clearRecents}
+                      />
+                    )}
                     {r.kind === "game" &&
                       (getGame(r.gameId) ? (
                         <GameStage game={getGame(r.gameId)!} onBack={() => void navigateIn(t.id, "scribe://lessons")} pushToast={pushToast} />

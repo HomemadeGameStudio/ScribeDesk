@@ -136,12 +136,12 @@ export function SettingsDrawer({ open, onClose, pushToast }: { open: boolean; on
             </button>
           </div>
 
-          <SectionHead icon={<IGlobe className="w-4 h-4" />} title="Anti-embed routing" sub={`${METHODS.length} transport methods — frame bans handled`} />
+          <SectionHead icon={<IGlobe className="w-4 h-4" />} title="Proxy routing" sub={`${METHODS.length} ways a page can reach the frame`} />
           <div className="flex flex-col gap-2.5">
             {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
               <div key={g}>
                 <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-mut mb-1.5">
-                  {g === "smart" ? "smart bypass" : g === "direct" ? "direct transports" : g === "relay" ? "cors relays · xfo-immune" : "mirror snapshots"}
+                  {g === "smart" ? "automatic" : g === "direct" ? "direct" : g === "relay" ? "relays" : "snapshots"}
                 </p>
                 <div className="flex flex-col gap-1.5">
                   {METHODS.filter((m) => m.group === g).map((m) => (
@@ -164,7 +164,7 @@ export function SettingsDrawer({ open, onClose, pushToast }: { open: boolean; on
             ))}
           </div>
           <p className="font-mono text-[9.5px] text-mut mt-2 leading-relaxed">
-            AUTO races the five relays in parallel and seals the winning payload into an opaque sandbox — XFO/CSP frame-ancestors never get a vote. Relay frames keep scripts but lose parent-origin access.
+            Automatic tries the relays in parallel and renders the first reply in a sealed frame, so pages that normally refuse to be embedded still load.
           </p>
           {s.engine === "gateway" && (
             <div className="mt-2">
