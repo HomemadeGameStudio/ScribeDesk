@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { useSettings, netPush } from "../lib/settings";
 import { useGames, loadGames, loadConfig, saveConfig, DEFAULT_CONFIG } from "../lib/games";
 import type { GameDef, GameConfig } from "../lib/games";
-import { ENGINES, urlHost } from "../lib/router";
+import { METHODS, urlHost } from "../lib/router";
+import type { Route } from "../lib/router";
+import type { ReactNode } from "react";
 import { STATIC_BOOKMARKS } from "./Chrome";
 import type { RecentEntry } from "./Chrome";
 import {
@@ -64,7 +66,7 @@ export function HomePage({ onNavigate, recents }: { onNavigate: (u: string) => v
 
   const hour = now.getHours();
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Evening session";
-  const engine = ENGINES.find((e) => e.id === s.engine);
+  const engine = METHODS.find((e) => e.id === s.engine);
 
   const sysRow = (k: string, v: string, dot?: boolean) => (
     <div className="flex items-center justify-between h-8 px-3 border-b border-line last:border-0">
@@ -490,6 +492,138 @@ export function GameStage({ game, onBack, pushToast }: { game: GameDef; onBack: 
         <span className="hidden sm:block font-mono text-[9.5px] text-mut">sandbox: sealed · origin-isolated · zero-leak pool</span>
         <IClock className="w-3.5 h-3.5 text-mut" />
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------- reader mode ------------------------- */
+
+function inlineMd(s: string, kp: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re = /(\*\*[^*]+?\*\*|\*[^*\s][^*]*?\*|`[^`]+?`|\[[^\]]+?\]\([^)]+?\)|!\[[^\]]*?\]\([^)]+?\))/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index));
+    const tok = m[0];
+    const k = kp + ":" + i++;
+    if (tok.startsWith("**")) out.push(<strong key={k}>{tok.slice(2, -2)}</strong>);
+    else if (tok.startsWith("`")) out.push(<code key={k} className="font-mono text-[0.85em] px-1 py-0.5 rounded bg-bg3 text-acc">{tok.slice(1, -1)}</code>);
+    else if (tok.startsWith("![")) {
+      const src = tok.slice(tok.indexOf("(") + 1, -1);
+      out.push(<img key={k} src={src} alt="" loading="lazy" className="max-w-full rounded-[var(--radius)] my-3 border border-line" />);
+    } else if (tok.startsWith("[")) {
+      const label = tok.slice(1, tok.indexOf("]"));
+      const href = tok.slice(tok.indexOf("(") + 1, -1);
+      out.push(
+        <a key={k} href={href} target="_blank" rel="noreferrer noopener" className="text-acc underline underline-offset-2 decoration-[color-mix(in_srgb,var(--acc)_40%,transparent)] hover:text-acc2 transition-colors duration-150">
+          {label}
+        </a>
+      );
+    } else out.push(<em key={k}>{tok.slice(1, -1)}</em>);
+    last = m.index + tok.length;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out;
+}
+
+function MdBlocks({ md }: { md: string }) {
+  const lines = md.split("\n");
+  const blocks: ReactNode[] = [];
+  let code: string[] | null = null;
+  let list: { ordered: boolean; items: string[] } | null = null;
+  const flushList = (key: string) => {
+    if (!list) return;
+    const items = list.items.map((it, i) => <li key={i}>{inlineMd(it, key + ":" + i)}</li>);
+    blocks.push(list.ordered ? <ol key={key} className="reader-ol">{items}</ol> : <ul key={key} className="reader-ul">{items}</ul>);
+    list = null;
+  };
+  lines.forEach((ln, i) => {
+    if (ln.trim().startsWith("```")) {
+      if (code) {
+        blocks.push(<pre key={"c" + i} className="reader-pre">{code.join("\n")}</pre>);
+        code = null;
+      } else {
+        flushList("l" + i);
+        code = [];
+      }
+      return;
+    }
+    if (code) { code.push(ln); return; }
+    const t = ln.trim();
+    if (!t) { flushList("l" + i); return; }
+    if (/^#{1,6}\s/.test(t)) {
+      flushList("l" + i);
+      const level = (t.match(/^#+/) ?? ["#"])[0].length;
+      const text = t.replace(/^#+\s*/, "");
+      const Tag = level === 1 ? "h1" : level === 2 ? "h2" : "h3";
+      blocks.push(<Tag key={"h" + i} className={level === 1 ? "reader-h1" : level === 2 ? "reader-h2" : "reader-h3"}>{inlineMd(text, "h" + i)}</Tag>);
+      return;
+    }
+    if (/^>\s?/.test(t)) {
+      flushList("l" + i);
+      blocks.push(<blockquote key={"q" + i} className="reader-quote">{inlineMd(t.replace(/^>\s?/, ""), "q" + i)}</blockquote>);
+      return;
+    }
+    if (/^[-*]\s+/.test(t)) {
+      if (!list || list.ordered) { flushList("l" + i); list = { ordered: false, items: [] }; }
+      list.items.push(t.replace(/^[-*]\s+/, ""));
+      return;
+    }
+    if (/^\d+\.\s+/.test(t)) {
+      if (!list || !list.ordered) { flushList("l" + i); list = { ordered: true, items: [] }; }
+      list.items.push(t.replace(/^\d+\.\s+/, ""));
+      return;
+    }
+    if (/^-{3,}$/.test(t)) { flushList("l" + i); blocks.push(<hr key={"r" + i} className="reader-hr" />); return; }
+    flushList("l" + i);
+    blocks.push(<p key={"p" + i} className="reader-p">{inlineMd(t, "p" + i)}</p>);
+  });
+  flushList("lend");
+  const leftover = code as string[] | null;
+  if (leftover && leftover.length) blocks.push(<pre key="cend" className="reader-pre">{leftover.join("\n")}</pre>);
+  return <>{blocks.map((b, i) => <Fragment key={i}>{b}</Fragment>)}</>;
+}
+
+export function ReaderPage({ route, onNavigate }: { route: Route; onNavigate: (u: string) => void }) {
+  if (route.error || !route.markdown) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-xl mx-auto px-6 py-20 anim-fadeup text-center">
+          <span className="chip on !cursor-default mx-auto mb-5">READER UNREACHABLE</span>
+          <h2 className="font-disp text-2xl font-bold mb-3">The extraction proxy didn’t answer</h2>
+          <p className="font-mono text-[11px] text-mut mb-2">{route.display}</p>
+          <p className="text-[12.5px] text-mut mb-8">{route.error ?? "empty payload"} — r.jina.ai is rate-limited or filtered on this network.</p>
+          <div className="flex items-center justify-center gap-2.5 flex-wrap">
+            <button className="btn-acc" onClick={() => onNavigate(route.raw)}><IRefresh className="w-3.5 h-3.5" /> Retry extraction</button>
+            <a className="ghost-btn" href={`https://r.jina.ai/${route.raw}`} target="_blank" rel="noreferrer noopener"><IExt className="w-3.5 h-3.5" /> r.jina.ai mirror</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const lines = route.markdown.split("\n");
+  let title = "";
+  let start = 0;
+  lines.forEach((l, i) => {
+    if (l.startsWith("Title:")) title = l.slice(6).trim();
+    if (l.startsWith("Markdown Content:")) start = i + 1;
+  });
+  const body = lines.slice(start).join("\n");
+  return (
+    <div className="flex-1 overflow-y-auto">
+      <article className="max-w-[730px] mx-auto px-6 pt-10 pb-24 anim-fadeup">
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          <span className="chip on !cursor-default"><IBack className="w-3 h-3 rotate-180" /> READER MODE</span>
+          <span className="font-mono text-[10px] text-mut truncate max-w-[420px]">{route.display}</span>
+        </div>
+        {title && <h1 className="reader-h1 !mb-7">{title}</h1>}
+        <MdBlocks md={body} />
+        <footer className="mt-14 pt-5 border-t border-line font-mono text-[9.5px] text-mut">
+          rendered via r.jina.ai · page stripped to markdown — frame bans, scripts and heavy assets never touch this workspace
+        </footer>
+      </article>
     </div>
   );
 }

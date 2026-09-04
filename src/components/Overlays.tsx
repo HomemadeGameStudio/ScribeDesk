@@ -4,8 +4,8 @@ import {
   useNetLog, useConsoleLog, clearLogs, conPush,
 } from "../lib/settings";
 import type { FontId, DensityId, PanicKind } from "../lib/settings";
-import { ENGINES, SEARCHES } from "../lib/router";
-import type { EngineId } from "../lib/router";
+import { METHODS, SEARCHES } from "../lib/router";
+import type { MethodId } from "../lib/router";
 import {
   IX, ICheck, IPalette, IType, IGrid, IList, IWide, ITrash, ITerm, IBack, IForward, IRefresh, IEyeOff, IGlobe, IEye, IZap,
 } from "./Icons";
@@ -136,24 +136,36 @@ export function SettingsDrawer({ open, onClose, pushToast }: { open: boolean; on
             </button>
           </div>
 
-          <SectionHead icon={<IGlobe className="w-4 h-4" />} title="Proxy routing" sub="how external URLs reach the frame" />
-          <div className="flex flex-col gap-1.5">
-            {ENGINES.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => { set({ engine: e.id as EngineId }); pushToast("Routing engine → " + e.label); }}
-                className={`panel p-2.5 text-left transition-all duration-150 flex items-start gap-2.5 ${s.engine === e.id ? "!border-[color-mix(in_srgb,var(--acc)_60%,transparent)]" : "hover:bg-bg2"}`}
-              >
-                <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border flex-none grid place-items-center ${s.engine === e.id ? "border-acc" : "border-line"}`}>
-                  {s.engine === e.id && <span className="w-1.5 h-1.5 rounded-full bg-acc" />}
-                </span>
-                <span>
-                  <span className="block text-[12.5px] font-semibold">{e.label}</span>
-                  <span className="block text-[10.5px] text-mut leading-snug mt-0.5">{e.desc}</span>
-                </span>
-              </button>
+          <SectionHead icon={<IGlobe className="w-4 h-4" />} title="Anti-embed routing" sub={`${METHODS.length} transport methods — frame bans handled`} />
+          <div className="flex flex-col gap-2.5">
+            {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
+              <div key={g}>
+                <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-mut mb-1.5">
+                  {g === "smart" ? "smart bypass" : g === "direct" ? "direct transports" : g === "relay" ? "cors relays · xfo-immune" : "mirror snapshots"}
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {METHODS.filter((m) => m.group === g).map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => { set({ engine: m.id as MethodId }); pushToast("Transport → " + m.label); }}
+                      className={`panel p-2.5 text-left transition-all duration-150 flex items-start gap-2.5 ${s.engine === m.id ? "!border-[color-mix(in_srgb,var(--acc)_60%,transparent)]" : "hover:bg-bg2"}`}
+                    >
+                      <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border flex-none grid place-items-center ${s.engine === m.id ? "border-acc" : "border-line"}`}>
+                        {s.engine === m.id && <span className="w-1.5 h-1.5 rounded-full bg-acc" />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12.5px] font-semibold">{m.label} <span className="font-mono text-[8.5px] text-acc ml-1">{m.short}</span></span>
+                        <span className="block text-[10.5px] text-mut leading-snug mt-0.5">{m.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
+          <p className="font-mono text-[9.5px] text-mut mt-2 leading-relaxed">
+            AUTO races the five relays in parallel and seals the winning payload into an opaque sandbox — XFO/CSP frame-ancestors never get a vote. Relay frames keep scripts but lose parent-origin access.
+          </p>
           {s.engine === "gateway" && (
             <div className="mt-2">
               <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-mut mb-1.5">Gateway prefix</p>

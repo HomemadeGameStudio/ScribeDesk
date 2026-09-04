@@ -61,19 +61,29 @@ function def(id: string, src: string, tech: GameDef["tech"], i: number, remote: 
   };
 }
 
+/**
+ * Packaged snapshot of genizy/web-port branches — used when both the
+ * GitHub API and the jsDelivr mirror are filtered. If you fork the repo
+ * (e.g. to yourname/web-port), games still resolve on this list and the
+ * live fetchers can be re-pointed by editing WEBPORT_REPO below.
+ */
+export const WEBPORT_REPO = "genizy/web-port";
+const SNAPSHOT_BRANCHES = [
+  "buckshot-roulette",
+  "bendy-and-the-ink-machine",
+  "doom",
+  "minecraft",
+  "sm64",
+  "gta-vc",
+  "portal",
+  "fnaf",
+  "pokemon",
+  "sonic",
+];
+
 /** Packaged fallback index — guaranteed to render offline. */
 export const LOCAL_INDEX: GameDef[] = [
-  ...[
-    "buckshot-roulette",
-    "doom",
-    "bendy-and-the-ink-machine",
-    "fnaf",
-    "mario-64",
-    "minecraft",
-    "pokemon",
-    "sonic",
-    "gta",
-  ].map((slug, i) => def(slug, `https://genizy.github.io/web-port/${slug}/`, i % 2 === 0 ? "WASM" : "EMU", i, true)),
+  ...SNAPSHOT_BRANCHES.map((slug, i) => def(slug, `https://genizy.github.io/web-port/${slug}/`, i % 2 === 0 ? "WASM" : "EMU", i, true)),
   def("2048", "https://gabrielecirulli.github.io/2048/", "HTML5", 9, false, "2048 — Tile Merge"),
   def("hextris", "https://hextris.github.io/hextris/", "HTML5", 10, false, "Hextris — Radial Stack"),
   def("clumsy-bird", "https://ellisonleao.github.io/clumsy-bird/", "WebGL", 11, false, "Clumsy Bird — Flight Drill"),
@@ -126,22 +136,44 @@ export function loadGames(force = false): void {
     /* cache unreadable — refetch */
   }
 
-  fetch("https://api.github.com/repos/genizy/web-port/branches?per_page=100")
+  const persist = (names: string[]) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), branches: names }));
+    } catch {
+      /* quota */
+    }
+  };
+
+  /* hop 1 — GitHub API */
+  fetch(`https://api.github.com/repos/${WEBPORT_REPO}/branches?per_page=100`)
     .then((r) => {
       if (!r.ok) throw new Error("GitHub API " + r.status);
       return r.json() as Promise<{ name: string }[]>;
     })
     .then((branches) => {
       const names = branches.map((b) => b.name).filter((n) => n !== "main" && n !== "master");
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), branches: names }));
-      } catch {
-        /* quota */
-      }
-      applyBranches(names, "live web-port tree");
+      persist(names);
+      applyBranches(names, `live tree · GitHub API (${WEBPORT_REPO})`);
     })
+    /* hop 2 — jsDelivr data mirror (CORS-open, survives GitHub rate limits) */
+    .catch(() => fetch(`https://data.jsdelivr.com/v1/packages/gh/${WEBPORT_REPO}`))
+    .then((r) => {
+      if (store.status === "ready") return undefined; // hop 1 already resolved it
+      if (!r || !r.ok) throw new Error("jsDelivr mirror unreachable");
+      return r.json() as Promise<{ versions?: { name: string; type?: string }[] }>;
+    })
+    .then((pkg) => {
+      if (!pkg || store.status === "ready") return; // nothing left to do
+      const names = (pkg.versions ?? []).map((v) => v.name).filter((n) => n !== "main" && n !== "master");
+      if (!names.length) throw new Error("mirror returned no branches");
+      persist(names);
+      applyBranches(names, `live tree · jsDelivr mirror (${WEBPORT_REPO})`);
+    })
+    /* hop 3 — packaged snapshot */
     .catch(() => {
-      store.status = "error";
+      store.list = LOCAL_INDEX;
+      store.status = "ready";
+      store.source = `snapshot index · ${SNAPSHOT_BRANCHES.length} ${WEBPORT_REPO} branches packaged`;
       emit();
     });
 }

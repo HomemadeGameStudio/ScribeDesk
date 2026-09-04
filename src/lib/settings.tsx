@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
-import type { EngineId, SearchId } from "./router";
+import type { MethodId, SearchId } from "./router";
+import { METHODS } from "./router";
 
 /* ------------------------------- types ------------------------------- */
 
@@ -19,7 +20,7 @@ export interface Settings {
   blur: number;
   density: DensityId;
   sidebar: boolean;
-  engine: EngineId;
+  engine: MethodId;
   gateway: string;
   search: SearchId;
   panicScreen: PanicKind;
@@ -35,7 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blur: 14,
   density: "compact",
   sidebar: true,
-  engine: "direct",
+  engine: "auto",
   gateway: "https://your-uv-gateway.example/service",
   search: "wikipedia",
   panicScreen: "docs",
@@ -186,7 +187,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [s, setS] = useState<Settings>(() => {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY) || "null");
-      return raw ? { ...DEFAULT_SETTINGS, ...raw } : { ...DEFAULT_SETTINGS };
+      if (!raw) return { ...DEFAULT_SETTINGS };
+      const merged = { ...DEFAULT_SETTINGS, ...(raw as Partial<Settings>) };
+      if (!METHODS.some((m) => m.id === merged.engine)) merged.engine = "auto"; // migrate stale v1 engine ids
+      return merged;
     } catch {
       return { ...DEFAULT_SETTINGS };
     }

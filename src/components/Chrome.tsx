@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSettings, DISGUISES } from "../lib/settings";
-import type { Tab, Route, EngineId } from "../lib/router";
-import { cur, ENGINES, urlHost } from "../lib/router";
+import type { Tab, Route, MethodId } from "../lib/router";
+import { cur, METHODS, methodLabel, urlHost } from "../lib/router";
 import {
   IBack, IForward, IRefresh, IHome, IStar, IStarFill, IX, IPlus, IGear, IBug, IFind,
   IShield, IGlobe, ILock, IBook, IChevD, IPanel, IGame, IPen, IZap, ICheck, ITrash, IWifi, IExt, IClock,
@@ -343,7 +343,7 @@ interface ToolbarProps {
   canBack: boolean;
   canFwd: boolean;
   loading: boolean;
-  engine: EngineId;
+  engine: MethodId;
   bookmarked: boolean;
   findOpen: boolean;
   devOpen: boolean;
@@ -360,10 +360,11 @@ interface ToolbarProps {
   onDev: () => void;
   onPanic: () => void;
   onSettings: () => void;
+  onMethod: (m: MethodId) => void;
 }
 
 export function Toolbar(p: ToolbarProps) {
-  const { s } = useSettings();
+  const [mmOpen, setMmOpen] = useState(false);
   const r = p.route;
   const left =
     r.kind === "web" && r.display.startsWith("https://") ? <ILock className="w-3.5 h-3.5 text-acc" />
@@ -393,9 +394,45 @@ export function Toolbar(p: ToolbarProps) {
           onKeyDown={(e) => { if (e.key === "Enter") p.onSubmit(); }}
           onFocus={(e) => e.target.select()}
         />
-        <span className="chip !cursor-default hidden sm:inline-flex" title={ENGINES.find((x) => x.id === p.engine)?.desc}>
-          {ENGINES.find((x) => x.id === p.engine)?.label}
-        </span>
+        <div className="relative hidden sm:block flex-none">
+          <button
+            className={`chip ${mmOpen ? "on" : ""}`}
+            onClick={() => setMmOpen(!mmOpen)}
+            title={METHODS.find((x) => x.id === p.engine)?.desc ?? "Transport method"}
+          >
+            {methodLabel(p.engine)}
+            <IChevD className={`w-3 h-3 transition-transform duration-200 ${mmOpen ? "rotate-180" : ""}`} />
+          </button>
+          {mmOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMmOpen(false)} />
+              <div className="absolute right-0 top-8 w-[330px] panel p-1.5 z-50 anim-pop shadow-[0_20px_55px_rgba(0,0,0,0.55)] max-h-[64vh] overflow-y-auto" style={{ backdropFilter: "blur(var(--blur))" }}>
+                <p className="px-2 pt-1.5 pb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-acc">anti-embed bypass · {METHODS.length} transports</p>
+                {(["smart", "direct", "relay", "mirror"] as const).map((g) => (
+                  <div key={g}>
+                    <p className="px-2 pt-2 pb-1 font-mono text-[8.5px] uppercase tracking-[0.16em] text-mut">
+                      {g === "smart" ? "smart bypass" : g === "direct" ? "direct transports" : g === "relay" ? "cors relays · xfo-immune" : "mirror snapshots"}
+                    </p>
+                    {METHODS.filter((m) => m.group === g).map((m) => (
+                      <button
+                        key={m.id}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--radius)] hover:bg-bg3 text-left transition-colors duration-100"
+                        onClick={() => { p.onMethod(m.id); setMmOpen(false); }}
+                      >
+                        <span className="font-mono text-[9px] text-acc w-[46px] flex-none">{m.short}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[12px] font-medium leading-tight">{m.label}</span>
+                          <span className="block text-[9.5px] text-mut leading-snug mt-0.5">{m.desc}</span>
+                        </span>
+                        {m.id === p.engine && <ICheck className="w-3.5 h-3.5 text-acc flex-none" />}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <button className="iconbtn !w-7 !h-7" onClick={p.onToggleBookmark} title={p.bookmarked ? "Remove bookmark" : "Pin bookmark"}>
           {p.bookmarked ? <IStarFill className="w-4 h-4 text-acc2" /> : <IStar className="w-4 h-4" />}
         </button>
@@ -435,7 +472,10 @@ export function StatusStrip({ route, tabCount }: { route: Route; tabCount: numbe
       <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] flex-none">
         <span className="pulse-dot" /> routed · {route.via}
       </span>
-      <span className="flex-1 truncate font-mono text-[10.5px] text-mut/80 text-center">{route.display}</span>
+      <span className="flex-1 truncate font-mono text-[10.5px] text-mut/80 text-center">
+        {route.note && <span className="text-acc2">{route.note} · </span>}
+        {route.display}
+      </span>
       <span className="hidden md:flex items-center gap-1.5 flex-none text-[10px] font-mono">
         <kbd>ESC</kbd> panic
       </span>

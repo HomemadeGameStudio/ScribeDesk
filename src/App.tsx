@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SettingsProvider, useSettings, netPush, conPush } from "./lib/settings";
-import { resolveRoute, internalRoute, cur, makeTab } from "./lib/router";
-import type { Tab, Route } from "./lib/router";
+import { resolveRoute, internalRoute, cur, makeTab, METHODS } from "./lib/router";
+import type { Tab, Route, MethodId } from "./lib/router";
 import { getGame, loadGames } from "./lib/games";
 import type { GameDef } from "./lib/games";
 import {
@@ -9,7 +9,7 @@ import {
   STATIC_BOOKMARKS, loadCustomBookmarks, saveCustomBookmarks,
 } from "./components/Chrome";
 import type { Bookmark, RecentEntry } from "./components/Chrome";
-import { HomePage, LessonsPage, GameStage } from "./components/Internal";
+import { HomePage, LessonsPage, GameStage, ReaderPage } from "./components/Internal";
 import { SettingsDrawer, FindOverlay, DevTools, PanicOverlay, Toasts } from "./components/Overlays";
 import { IInfo, IZap } from "./components/Icons";
 import { urlHost } from "./lib/router";
@@ -136,14 +136,14 @@ function Shell() {
     });
   };
 
-  async function navigateIn(tabId: string, raw: string) {
+  async function navigateIn(tabId: string, raw: string, methodOverride?: MethodId) {
     const started = performance.now();
     patchTab(tabId, (t) => ({ ...t, loading: true }));
     let r: Route;
     try {
-      r = await resolveRoute(raw, s.engine, s.gateway, s.search, (id) => getGame(id)?.title ?? id);
+      r = await resolveRoute(raw, methodOverride ?? s.engine, s.gateway, s.search, (id) => getGame(id)?.title ?? id);
     } catch {
-      r = { kind: "web", display: raw, title: raw, src: null, srcdoc: null, via: "—", error: "Route resolution failed" };
+      r = { kind: "web", raw, display: raw, title: raw, src: null, srcdoc: null, sealed: false, via: "—", error: "Route resolution failed" };
     }
     const ms = Math.round(performance.now() - started);
     netPush({ method: "GET", url: r.display, engine: r.via, status: r.error ? "FAILED" : "ROUTED", ms });
@@ -402,6 +402,12 @@ function Shell() {
               onDev={() => setDevOpen(!devOpen)}
               onPanic={() => { conPush("warn", "PANIC — disguise engaged (" + s.panicScreen + ")"); togglePanic(); }}
               onSettings={() => setSettingsOpen(true)}
+              onMethod={(m) => {
+                set({ engine: m });
+                pushToast("Transport → " + (METHODS.find((x) => x.id === m)?.label ?? m));
+                conPush("info", "transport switched → " + m + " · re-routing " + route.raw);
+                void navigateIn(active.id, route.raw, m);
+              }}
             />
             {active.loading && <div className="h-[2px] progress-track flex-none" />}
 
@@ -425,6 +431,7 @@ function Shell() {
                           onSettings={() => setSettingsOpen(true)}
                         />
                       ))}
+                    {r.kind === "reader" && <ReaderPage route={r} onNavigate={(u) => void navigateIn(t.id, u)} />}
                     {r.kind === "web" && (
                       <div className="flex-1 min-h-0 relative bg-white">
                         {!r.error && (
@@ -434,12 +441,17 @@ function Shell() {
                             srcDoc={r.srcdoc ?? undefined}
                             title={r.title}
                             className="w-full h-full border-0 bg-white"
-                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                            sandbox={
+                              r.sealed
+                                ? "allow-scripts allow-forms allow-popups allow-modals allow-pointer-lock allow-presentation"
+                                : "allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
+                            }
+                            referrerPolicy="no-referrer"
                             allow="fullscreen; clipboard-write"
                             onLoad={(e) => frameLoad(t.id, e)}
                           />
                         )}
-                        {r.error && <ErrorPanel route={r} onRetry={() => void navigateIn(t.id, r.display)} onSettings={() => setSettingsOpen(true)} />}
+                        {r.error && <ErrorPanel route={r} onRetry={() => void navigateIn(t.id, r.raw)} onSettings={() => setSettingsOpen(true)} />}
                         {t.loading && !r.error && (
                           <div className="absolute inset-0 z-10 grid place-items-center" style={{ background: "color-mix(in srgb, var(--bg0) 82%, transparent)", backdropFilter: "blur(6px)" }}>
                             <div className="panel px-5 h-12 flex items-center gap-3 anim-pop">
