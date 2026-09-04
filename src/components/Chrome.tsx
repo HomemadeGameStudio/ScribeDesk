@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useSettings, DISGUISES } from "../lib/settings";
+import { useSettings, DISGUISES, CLOAKS, cloakFav } from "../lib/settings";
 import type { Tab, Route, MethodId } from "../lib/router";
 import { cur, METHODS, methodLabel, urlHost } from "../lib/router";
 import {
   IBack, IForward, IRefresh, IHome, IStar, IStarFill, IX, IPlus, IGear, IBug, IFind,
-  IShield, IGlobe, ILock, IBook, IChevD, IPanel, IGame, IPen, IZap, ICheck, ITrash, IWifi, IExt, IClock, INews,
+  IShield, IGlobe, ILock, IBook, IChevD, IPanel, IGame, IPen, IZap, ICheck, ITrash, IExt, IClock, INews, IEye,
 } from "./Icons";
 
 /* ------------------------------ bookmarks ---------------------------- */
@@ -354,6 +354,7 @@ interface ToolbarProps {
   onDev: () => void;
   onPanic: () => void;
   onSettings: () => void;
+  onBlank: () => void;
   onMethod: (m: MethodId) => void;
 }
 

@@ -202,6 +202,37 @@ function Shell() {
     void navigateIn(t.id, url);
   };
 
+  /** Clone the running workspace into a fresh blank tab — all assets are
+      re-declared with absolute URLs so the copy is fully functional and the
+      real address never appears in the browser bar. */
+  const openBlankTab = () => {
+    const w = window.open("about:blank", "_blank");
+    if (!w) {
+      pushToast("Popup blocked — allow popups to open a blank tab.");
+      return;
+    }
+    const abs = (el: Element) => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      if (clone.tagName === "SCRIPT") (clone as HTMLScriptElement).src = new URL((el as HTMLScriptElement).src, location.href).href;
+      const href = clone.getAttribute("href");
+      if (href && !href.startsWith("data:")) clone.setAttribute("href", new URL(href, location.href).href);
+      return clone.outerHTML;
+    };
+    const styles = Array.from(document.querySelectorAll("link[rel='stylesheet']")).map(abs).join("");
+    const fonts = Array.from(document.querySelectorAll("link[rel='preconnect']")).map((el) => el.outerHTML).join("");
+    const scripts = Array.from(document.querySelectorAll("script[src]")).map(abs).join("");
+    const html =
+      `<!doctype html><html lang="en"><head><meta charset="utf-8">` +
+      `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+      `<meta name="color-scheme" content="dark">` +
+      fonts + styles + `<title>${document.title}</title></head>` +
+      `<body style="margin:0;background:#0e0e10"><div id="root"></div>${scripts}</body></html>`;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    conPush("info", "workspace cloned into a blank tab");
+  };
+
   const closeTab = (id: string) => {
     setTabs((prev) => {
       const idx = prev.findIndex((t) => t.id === id);
