@@ -10,6 +10,23 @@ export type FontId = "grotesk" | "geist" | "inter" | "jetbrains";
 export type DensityId = "compact" | "wide" | "list";
 export type DisguiseId = "none" | "wiki" | "sheets" | "textbook";
 export type PanicKind = "docs" | "desmos";
+export type CloakId = "none" | "clever" | "canvas" | "desmos" | "classroom" | "schoology" | "wikipedia";
+
+export interface CloakDef { id: CloakId; label: string; title: string; domain: string | null }
+
+export const CLOAKS: CloakDef[] = [
+  { id: "none", label: "No cloak", title: "", domain: null },
+  { id: "clever", label: "Clever", title: "Clever | Portal", domain: "clever.com" },
+  { id: "canvas", label: "Canvas by Instructure", title: "Dashboard", domain: "canvas.instructure.com" },
+  { id: "desmos", label: "Desmos Scientific", title: "Desmos | Scientific Calculator", domain: "desmos.com" },
+  { id: "classroom", label: "Google Classroom", title: "Home", domain: "classroom.google.com" },
+  { id: "schoology", label: "Schoology", title: "Home | Schoology", domain: "schoology.com" },
+  { id: "wikipedia", label: "Wikipedia", title: "Wikipedia, the free encyclopedia", domain: "wikipedia.org" },
+];
+
+export function cloakFav(c: CloakDef): string {
+  return c.domain ? `https://www.google.com/s2/favicons?sz=64&domain=${c.domain}` : "";
+}
 
 export interface Settings {
   theme: ThemeId;
@@ -21,6 +38,7 @@ export interface Settings {
   density: DensityId;
   sidebar: boolean;
   engine: MethodId;
+  cloak: CloakId;
   gateway: string;
   search: SearchId;
   panicScreen: PanicKind;
@@ -37,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   density: "compact",
   sidebar: true,
   engine: "auto",
+  cloak: "none",
   gateway: "https://your-uv-gateway.example/service",
   search: "wikipedia",
   panicScreen: "docs",
