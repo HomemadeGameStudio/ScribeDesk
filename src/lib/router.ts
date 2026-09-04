@@ -8,7 +8,7 @@
 import { netPush } from "./settings";
 
 export type MethodId =
-  | "auto" | "direct" | "gateway"
+  | "auto" | "gateway"
   | "relayA" | "relayB" | "relayC" | "relayD" | "relayE"
   | "translate" | "wb2if" | "wb2id" | "reader";
 
@@ -47,8 +47,7 @@ export const METHODS: {
 }[] = [
   { id: "auto", label: "Automatic", short: "AUTO", group: "smart", desc: "Tries the relays in parallel and uses the first reply. Falls back to direct loading." },
   { id: "reader", label: "Reader Mode", short: "READ", group: "smart", desc: "Strips the page to clean, readable text via r.jina.ai. Loads even sites that block embedding." },
-  { id: "direct", label: "Direct Embed", short: "DIRECT", group: "direct", desc: "Loads the site as-is with full JS. Pages that refuse embedding will appear blank." },
-  { id: "gateway", label: "UV Gateway", short: "UV", group: "direct", desc: "Ultraviolet-style prefix gateway. Point it at your own /service/ deployment." },
+  { id: "gateway", label: "UV Gateway", short: "UV", group: "direct", desc: "Prefix gateway for your own deployment — set the prefix in Settings." },
   { id: "relayA", label: "Relay α · allorigins/raw", short: "RLY·α", group: "relay", desc: "Fetches the raw page via relay and renders it in a sealed frame, so embed blocks don’t apply." },
   { id: "relayB", label: "Relay β · allorigins/json", short: "RLY·β", group: "relay", desc: "Second allorigins endpoint (JSON envelope). Survives endpoint-level blocks." },
   { id: "relayC", label: "Relay γ · corsproxy.io", short: "RLY·γ", group: "relay", desc: "corsproxy.io transport. Independent infrastructure from the α/β relays." },
@@ -219,8 +218,6 @@ export async function resolveRoute(
       const g = (gateway || "https://").trim().replace(/\/+$/, "");
       return webRoute(target, title, `${g}/${target}`, "UV Gateway");
     }
-    case "direct":
-      return webRoute(target, title, target, "Direct");
     case "translate":
       return webRoute(
         target, title,
@@ -276,10 +273,11 @@ export async function resolveRoute(
           note: "frame ban neutralized — payload sealed in an opaque sandbox",
         };
       }
-      return webRoute(
-        target, title, target, "Auto · direct",
-        "all relay probes failed — fell back to direct embed; switch transports if the page is blank"
-      );
+      return {
+        kind: "web", raw: target, display: target, title,
+        src: null, srcdoc: null, sealed: true, via: "Auto",
+        error: "Couldn't load this site — every route timed out or was refused.",
+      };
     }
   }
 }
