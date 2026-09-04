@@ -533,6 +533,135 @@ export function PanicOverlay({ kind }: { kind: PanicKind }) {
   return kind === "docs" ? <DocsPanic /> : <DesmosPanic />;
 }
 
+/* ------------------------------- changelog --------------------------- */
+
+interface ReleaseSection { t: "New" | "Improved" | "Fixed"; color: string; items: string[] }
+interface Release { v: string; tag: string; date: string; sections: ReleaseSection[] }
+
+export const RELEASES: Release[] = [
+  {
+    v: "2.5.0", tag: "Quiet", date: "Feb 2026",
+    sections: [
+      {
+        t: "New", color: "var(--acc)",
+        items: [
+          "This changelog — shown once per update, reopenable from your account menu under “What’s new”.",
+          "scribe://history page (also Ctrl+H): full log up to 60 entries with live search, per-entry remove, and confirm-guarded clear.",
+          "Every bookmark pin now carries its own × unpin button on hover.",
+          "Home lists your 8 most recent routes; anything older lives in History behind a “View all” link.",
+        ],
+      },
+      {
+        t: "Improved", color: "var(--acc2)",
+        items: [
+          "Full visual restyle — softer ambience, calmer status copy, a quieter home screen. The engine underneath is unchanged.",
+          "Bookmark bar starts empty; nothing ships pre-pinned anymore.",
+          "Recent entries now carry timestamps, so History can show relative times.",
+        ],
+      },
+      {
+        t: "Fixed", color: "#7fa7f5",
+        items: ["Sidebar recents no longer drift past eight rows.", "History survives reloads correctly with the new timestamped format."],
+      },
+    ],
+  },
+  {
+    v: "2.4.0", tag: "Bypass", date: "Jan 2026",
+    sections: [
+      {
+        t: "New", color: "var(--acc)",
+        items: [
+          "12-method routing engine with an Automatic mode that races five relays in parallel and renders the first live reply in a sealed frame.",
+          "Reader Mode — any page extracted to clean readable text via r.jina.ai, beating even fully blocked sites.",
+          "Google Translate proxy and Wayback 2if_/2id_ snapshot transports.",
+          "Transport menu in the address bar — switch methods per-route and the current page re-routes instantly.",
+          "Every relay attempt streams into the Network panel with status and latency.",
+        ],
+      },
+      {
+        t: "Improved", color: "var(--acc2)",
+        items: [
+          "Game index now resolves through a triple fetch chain: GitHub API → jsDelivr data mirror → packaged snapshot.",
+          "Fork support: point WEBPORT_REPO at your own copy of genizy/web-port and the whole pipeline follows.",
+        ],
+      },
+      {
+        t: "Fixed", color: "#7fa7f5",
+        items: ["Relay frames are now origin-opaque — scripts run but can’t touch workspace storage.", "Retries re-run the original omnibox input instead of the rewritten URL."],
+      },
+    ],
+  },
+  {
+    v: "2.0.0", tag: "Workspace", date: "Dec 2025",
+    sections: [
+      {
+        t: "New", color: "var(--acc)",
+        items: [
+          "ScribeDesk workspace: multi-tab browser shell with per-tab history, omnibox, bookmark bar, and EdTech top navigation.",
+          "scribe://lessons catalog synced live from genizy/web-port branches, each game launched in a sandboxed stage.",
+          "Per-game emulation tuning — resolution scale, aspect lock, frame limiter, audio gain, hardware acceleration — persisted per title.",
+          "Disguise profiles (docs wiki, spreadsheet utility, math textbook) that morph theme, type, layout, window title, and favicon at once.",
+          "Esc panic key with full-screen Google Docs and Desmos covers, including tab title and favicon swap.",
+          "Find-in-page (Ctrl+F), and an inspector with console capture + eval, a live network log, and a DOM tree explorer.",
+          "Theme override engine: graphite / OLED / matrix / custom hex, accent shifting, four typefaces, radius, frost, and layout density.",
+        ],
+      },
+    ],
+  },
+];
+
+export function ChangelogModal({ version, onClose }: { version: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[85] grid place-items-center p-5">
+      <div className="absolute inset-0 bg-black/60" style={{ backdropFilter: "blur(6px)" }} onClick={onClose} />
+      <div className="relative panel w-full max-w-[580px] max-h-[78vh] flex flex-col anim-pop overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+        <div className="flex items-start gap-3 px-6 pt-6 pb-4 border-b border-line flex-none">
+          <div className="flex-1 min-w-0">
+            <span className="chip on !cursor-default">RELEASE NOTES</span>
+            <h2 className="font-disp text-[26px] font-bold tracking-tight mt-2.5 leading-none">ScribeDesk {version}</h2>
+            <p className="font-mono text-[10px] text-mut mt-2">shown once per update · press <kbd>ESC</kbd> to dismiss</p>
+          </div>
+          <button className="iconbtn" onClick={onClose} title="Close"><IX className="w-4 h-4" /></button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {RELEASES.map((r, ri) => (
+            <section key={r.v} className={ri > 0 ? "mt-6 pt-5 border-t border-line" : ""} style={{ animation: `sd-fadeup 0.45s cubic-bezier(0.2,0.7,0.3,1) ${ri * 110}ms both` }}>
+              <div className="flex items-baseline gap-2.5 mb-3.5">
+                <span className="font-mono text-[13.5px] font-semibold">v{r.v}</span>
+                <span className="chip !h-[19px] !px-2 !text-[8.5px] !cursor-default">{r.tag}</span>
+                {ri === 0 && <span className="chip on !h-[19px] !px-2 !text-[8.5px] !cursor-default">current</span>}
+                <span className="ml-auto font-mono text-[9.5px] text-mut">{r.date}</span>
+              </div>
+              {r.sections.map((sc) => (
+                <div key={sc.t} className="mb-4 last:mb-0">
+                  <p className="flex items-center gap-1.5 mb-2">
+                    <span className="w-[7px] h-[7px] rounded-full flex-none" style={{ background: sc.color }} />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-mut">{sc.t}</span>
+                  </p>
+                  <ul className="flex flex-col gap-1.5 pl-[15px]">
+                    {sc.items.map((it, i) => (
+                      <li key={i} className="text-[12.5px] leading-relaxed text-fg/90 flex gap-2.5">
+                        <span className="text-mut/70 flex-none mt-px">—</span>
+                        <span className="min-w-0">{it}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </section>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 px-6 h-14 border-t border-line flex-none">
+          <span className="font-mono text-[9px] text-mut flex-1">sd:seen-version remembers which release you’ve read</span>
+          <button className="btn-acc" onClick={onClose}>Continue to workspace</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* -------------------------------- toasts ----------------------------- */
 
 export function Toasts({ items }: { items: { id: number; msg: string }[] }) {

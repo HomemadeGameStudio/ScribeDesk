@@ -4,7 +4,7 @@ import type { Tab, Route, MethodId } from "../lib/router";
 import { cur, METHODS, methodLabel, urlHost } from "../lib/router";
 import {
   IBack, IForward, IRefresh, IHome, IStar, IStarFill, IX, IPlus, IGear, IBug, IFind,
-  IShield, IGlobe, ILock, IBook, IChevD, IPanel, IGame, IPen, IZap, ICheck, ITrash, IWifi, IExt, IClock,
+  IShield, IGlobe, ILock, IBook, IChevD, IPanel, IGame, IPen, IZap, ICheck, ITrash, IWifi, IExt, IClock, INews,
 } from "./Icons";
 
 /* ------------------------------ bookmarks ---------------------------- */
@@ -52,10 +52,12 @@ interface TopBarProps {
   moduleTabs: Tab[];
   onSwitchTab: (id: string) => void;
   onPanic: () => void;
+  onChangelog: () => void;
+  version: string;
   pushToast: (m: string) => void;
 }
 
-export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, onPanic, pushToast }: TopBarProps) {
+export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, onPanic, onChangelog, version, pushToast }: TopBarProps) {
   const { s, set, brand } = useSettings();
   const [menu, setMenu] = useState<null | "mat" | "mod" | "ava">(null);
   const [clock, setClock] = useState(() => new Date());
@@ -180,6 +182,13 @@ export function TopBar({ onNavigate, onOpenSettings, moduleTabs, onSwitchTab, on
                 <p className="font-mono text-[10.5px] text-mut">Period 4 · Room 214 · ID 88412</p>
               </div>
             </div>
+            <button className={item} onClick={() => { setMenu(null); onChangelog(); }}>
+              <INews className="w-4 h-4 text-acc" />
+              <span className="flex-1">
+                <span className="block font-medium">What’s new</span>
+                <span className="block text-[10.5px] text-mut font-mono">release notes · v{version}</span>
+              </span>
+            </button>
             <p className="px-2.5 pt-1.5 pb-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-mut">Disguise profiles</p>
             {DISGUISES.map((d) => (
               <button key={d.id} className={item} onClick={() => { set({ ...d.patch, disguise: d.id }); pushToast(d.id === "none" ? "ScribeDesk identity restored." : `Disguise engaged — ${d.brand}.`); }}>

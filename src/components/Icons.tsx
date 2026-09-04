@@ -55,3 +55,4 @@ export const IZap = mk(<path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H13L13 2z" />);
 export const IArrowUpR = mk(<><path d="M7 17L17 7" /><path d="M8.5 7H17v8.5" /></>);
 export const IHash = mk(<><path d="M9 3L7 21M17 3l-2 18M4 8h17M3 16h17" /></>);
 export const ICmd = mk(<path d="M9 9V6a3 3 0 1 0-3 3h3zm0 0v6m0-6h6m-6 6v3a3 3 0 1 1-3-3h3zm6-6h3a3 3 0 1 0-3-3v3zm0 6v3a3 3 0 1 0 3-3h-3zm0 0H9" />);
+export const INews = mk(<><path d="M4 5h13v15H6a2 2 0 0 1-2-2V5z" /><path d="M17 8h3v10a2 2 0 0 1-2 2h-1" /><path d="M7 9h7M7 12.5h7M7 16h4" /></>);

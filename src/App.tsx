@@ -10,7 +10,9 @@ import {
 } from "./components/Chrome";
 import type { Bookmark, RecentEntry } from "./components/Chrome";
 import { HomePage, LessonsPage, GameStage, ReaderPage, HistoryPage } from "./components/Internal";
-import { SettingsDrawer, FindOverlay, DevTools, PanicOverlay, Toasts } from "./components/Overlays";
+import { SettingsDrawer, FindOverlay, DevTools, PanicOverlay, Toasts, ChangelogModal } from "./components/Overlays";
+
+const APP_VERSION = "2.5.0";
 import { IInfo, IZap } from "./components/Icons";
 import { urlHost } from "./lib/router";
 
@@ -94,6 +96,20 @@ function Shell() {
   const omniRef = useRef<HTMLInputElement>(null);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showLog, setShowLog] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sd:seen-version") !== APP_VERSION;
+    } catch {
+      return true;
+    }
+  });
+  const closeLog = () => {
+    try {
+      localStorage.setItem("sd:seen-version", APP_VERSION);
+    } catch { /* quota */ }
+    setShowLog(false);
+    conPush("info", "changelog dismissed · v" + APP_VERSION + " noted");
+  };
   const [devOpen, setDevOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
   const [findQ, setFindQ] = useState("");
@@ -299,6 +315,7 @@ function Shell() {
         if (findOpen) { setFindOpen(false); return; }
         if (settingsOpen) { setSettingsOpen(false); return; }
         if (devOpen) { setDevOpen(false); return; }
+        if (showLog) { closeLog(); return; }
         conPush("warn", "PANIC — disguise engaged (" + s.panicScreen + ")");
         togglePanic();
         e.preventDefault();
@@ -376,6 +393,8 @@ function Shell() {
           moduleTabs={moduleTabs}
           onSwitchTab={setActiveId}
           onPanic={() => { conPush("warn", "PANIC — disguise engaged (" + s.panicScreen + ")"); togglePanic(); }}
+          onChangelog={() => setShowLog(true)}
+          version={APP_VERSION}
           pushToast={pushToast}
         />
 
@@ -493,6 +512,7 @@ function Shell() {
       </div>
 
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} pushToast={pushToast} />
+      {showLog && <ChangelogModal version={APP_VERSION} onClose={closeLog} />}
       <FindOverlay
         open={findOpen}
         query={findQ}
