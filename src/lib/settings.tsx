@@ -245,8 +245,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       document.title = panic === "docs" ? "Untitled document - Google Docs" : "Desmos | Graphing Calculator";
       if (link) link.href = favHref(panic, panic === "docs" ? "#1a73e8" : "#17a05e");
     } else {
-      document.title = d.title;
-      if (link) link.href = favHref(d.glyph, d.favColor === "ACCENT" ? s.accent : d.favColor);
+      const c = CLOAKS.find((x) => x.id === s.cloak) ?? CLOAKS[0];
+      if (c.id !== "none") {
+        document.title = c.title;
+        if (link) link.href = cloakFav(c);
+      } else {
+        document.title = d.title;
+        if (link) link.href = favHref(d.glyph, d.favColor === "ACCENT" ? s.accent : d.favColor);
+      }
     }
   }, [s, panic]);
 
