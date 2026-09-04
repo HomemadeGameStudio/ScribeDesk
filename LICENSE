@@ -1,0 +1,44 @@
+NON-MODIFIABLE SOURCE-AVAILABLE USE & DISTRIBUTION LICENSE (NMSAUD-1.0)
+
+Copyright (c) 2026 _Logic (HomemadeGameStudio). All rights reserved.
+1. Definitions
+
+    "Software" means the ScribeDesk codebase, source files, documentation, layout architecture, visual assets, binary files, and any associated digital materials authored and published by the Licensor.
+
+    "Licensor" means _Logic (HomemadeGameStudio), the original creator and copyright holder of the Software.
+
+    "Licensee" means any individual, legal entity, or group exercising rights under this License.
+
+    "Use" means the execution, deployment, self-hosting, rendering, or interaction with the unmodified Software in a live environment or local instance.
+
+    "Derivative Work" means any translation, abstraction, adaptation, recompilation, rewriting, rebranding, or modification of the Software, including any work that incorporates any portion of the Software into another project or alters the internal logic, structure, UI components, or source text.
+
+2. Grant of Rights
+
+Subject to strict compliance with the terms, conditions, and restrictions contained herein, the Licensor hereby grants the Licensee a worldwide, non-exclusive, royalty-free, non-transferable right to:
+
+    Host and Deploy: Copy, run, and host the exact, unmodified Software for personal or public use.
+
+    Fork and View: View, inspect, and fork the repository on public or private code-hosting platforms solely for the purpose of running an identical copy of the Software.
+
+3. Explicit Restrictions & Prohibitions
+
+The rights granted in Section 2 are conditioned upon strict adherence to the following negative covenants. Any breach of this section terminates this License automatically and immediately:
+
+    Absolute Prohibition on Modification: Licensee is strictly prohibited from altering, editing, patching, refactoring, changing, or otherwise modifying any portion of the Software’s source code, configuration files, visual elements, or core logic.
+
+    Ban on Derivative Works: Licensee shall not create, release, or distribute any Derivative Works based upon, derived from, or inspired by the Software's architecture or codebase.
+
+    Rebranding Restrictions: Licensee shall not remove, alter, obscure, or overwrite any author attributions, copyright notices, branding markers, or credit links embedded within the Software or its user interface.
+
+    Commercial Resale Prohibition: Licensee shall not sell, license, lease, sub-license, or commercially monetize access to the Software or hosted instances of the Software for financial gain.
+
+4. Mandatory Attribution Requirement
+
+Any public deployment, hosting, or sharing of the Software must conspicuously display clear, unedited credit identifying _Logic (HomemadeGameStudio) as the sole creator and original author of the Software. This attribution must be readily visible to end-users interacting with the deployment (such as in a footer, about page, or repository description).
+5. Termination
+
+This License and all rights granted hereunder will terminate automatically and immediately without notice from the Licensor if the Licensee breaches any term or condition of this License. Upon termination, Licensee must immediately cease all use, hosting, and distribution of the Software and permanently delete all copies in their possession or control.
+6. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
